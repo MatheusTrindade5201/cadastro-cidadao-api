@@ -1,0 +1,80 @@
+name: CI
+
+on: [push]
+
+jobs:
+  lint:
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: [ '3.10' ]
+        os: [ ubuntu-latest ]
+    runs-on: ${{matrix.os}}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{matrix.python-version}}
+      - name: Install pipenv
+        run: |
+          python -m pip install --upgrade pipenv wheel
+      - name: Install dependencies
+        run: |
+          pipenv install -d
+      - name: Look for style errors
+        run: pipenv run pflake8
+      - name: Check for importing style
+        run: pipenv run isort --profile=black --check --diff logic persistency routers tests utils
+      - name: Look for auto format errors
+        run: pipenv run black --check --diff logic persistency routers tests utils
+
+  tests:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.9', '3.10' ]
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install pipenv
+        run: |
+          python -m pip install --upgrade pipenv wheel
+      - name: Install dependencies
+        run: |
+          pipenv install -d
+      - name: Pull postgres image
+        run: docker pull postgres
+      - name: Start PostgreSQL
+        run: docker run --name postgresql -p 5432:5432 -e POSTGRES_PASSWORD=admin -e POSTGRES_USER=admin --rm -d postgres
+      - uses: getong/redis-action@v1
+        with:
+          redis version: '5.0.7'
+          host port: 6379
+          container port: 6379
+          redis password: 'admin'
+      - name: Create backend and tests databases
+        run: |
+          docker exec postgresql psql -U admin -c "CREATE DATABASE backend;"
+          docker exec postgresql psql -U admin -c "CREATE DATABASE tests;"
+      - name: Running alembic
+        run: |
+          pipenv run alembic upgrade head
+      - name: Confirm existent databases
+        run:  |
+          docker exec postgresql psql -U admin -l
+          docker exec postgresql psql -U admin -d backend -c "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'user';"
+          docker exec postgresql psql -U admin -d tests -c "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'user';"
+      - name: Run Tests
+        run: |
+          pipenv run pytest -v --junit-xml=test-results.xml
+      - name: publish junit results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: test-results.xml
+          check_name: Test Result (Python ${{ matrix.python-version }})

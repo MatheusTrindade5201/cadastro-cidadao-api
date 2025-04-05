@@ -1,0 +1,32 @@
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q -vv"
+testpaths = [
+    "tests"
+]
+
+[tool.pytest]
+asyncio_mode = "auto"
+
+[tool.flake8]
+exclude = [".venv", "build"]
+max-line-length = 79
+
+[tool.black]
+line-length = 79
+target-version = ["py36", "py37"]
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.venv
+  | _build
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 79
+src_paths = ["logic", "migrations", "persistency", "routers", "tests", "utils"]
