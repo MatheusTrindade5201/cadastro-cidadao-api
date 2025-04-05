@@ -55,6 +55,13 @@ class UnauthorizedLogin(BaseInternalException):
         )
 
 
+class UnauthorizedAccess(BaseInternalException):
+    def __init__(self, description: str):
+        super().__init__(
+            name="INVALID_ACCESS", description=description, status_code=401
+        )
+
+
 class ForbiddenToken(BaseInternalException):
     def __init__(self, description: str):
         super().__init__(
