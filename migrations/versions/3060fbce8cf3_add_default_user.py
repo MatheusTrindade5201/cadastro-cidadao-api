@@ -21,7 +21,7 @@ depends_on = None
 name = getenv("USER_NAME", default="Admin")
 email = getenv("USER_EMAIL", default="Admin@admin.com")
 password = getenv("USER_PASSWORD", default="123456789")
-zoomer_type = getenv("USER_TYPE", default="ZOOM")
+role = getenv("USER_TYPE", default="admin")
 
 def upgrade() -> None:
     connection = op.get_bind()
@@ -36,7 +36,7 @@ def upgrade() -> None:
         name=name,
         email=email,
         password=generate_hash(password),
-        role="Zoomer",
+        role=role,
     )
 
     connection.execute(insert_user_query)

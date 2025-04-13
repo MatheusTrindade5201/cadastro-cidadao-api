@@ -8,7 +8,7 @@ from config import Config
 from utils.exceptions.exception import UnauthorizedLogin
 
 ALGORITHM = "HS256"
-MINUTES = 30
+MINUTES = 3600
 
 
 def new_salt():

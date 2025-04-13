@@ -23,6 +23,8 @@ python-multipart = "*"
 pydantic = "*"
 jinja2 = "*"
 pytz = "*"
+aiohttp = "*"
+unidecode = "*"
 
 [dev-packages]
 

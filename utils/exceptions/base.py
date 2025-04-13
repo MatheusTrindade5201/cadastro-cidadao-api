@@ -3,19 +3,28 @@ from starlette.responses import JSONResponse
 
 
 class BaseInternalException(HTTPException):
-    def __init__(self, name: str, description: str, status_code: int):
-        self._name: str = "Default Exception name" if not name else name
-        self._description: str = (
-            "Default Exception" if not description else description
-        )
-        self._status_code: int = 400 if not status_code else status_code
+    def __init__(
+        self,
+        name: str,
+        description: str = None,
+        descriptions: dict = None,
+        status_code: int = 400,
+    ):
+        self._name = name or "Default Exception name"
+        self._status_code = status_code or 400
+        self._description = descriptions or description or "Default Exception"
+
         super().__init__(status_code=self._status_code)
 
     def generate_error_response(self):
         return JSONResponse(
             status_code=self._status_code,
-            content={"error": self._name, "message": self._description},
+            content={
+                "error": self._name,
+                "message": self._description,
+            },
         )
+
 
 
 class InternalServerError(BaseInternalException):

@@ -140,3 +140,54 @@ class EntityNotExists(BaseInternalException):
             description=description,
             status_code=404,
         )
+
+
+class InvalidStateUF(BaseInternalException):
+    def __init__(self, uf: str):
+        descriptions = {
+            "pt_br": f"UF inválido informado: {uf}.",
+            "en_us": f"Invalid UF informed: {uf}.",
+        }
+        super().__init__(
+            name="INVALID_STATE_UF",
+            descriptions=descriptions,
+            status_code=400,
+        )
+
+
+class ExternalServiceFailure(BaseInternalException):
+    def __init__(self):
+        descriptions = {
+            "pt_br": "Falha ao acessar serviço externo.",
+            "en_us": "Failed to access external service",
+        }
+        super().__init__(
+            name="EXTERNAL_SERVICE_FAILURE",
+            descriptions=descriptions,
+            status_code=400,
+        )
+
+
+class InvalidCityForState(BaseInternalException):
+    def __init__(self, city: str, state_uf: str):
+        descriptions = {
+            "pt_br": f"Cidade {city} não encontrada para o estado informado: {state_uf}",
+            "en_us": f"City {city} not found for given state: {state_uf}",
+        }
+        super().__init__(
+            name="INVALID_CITY_FOR_STATE",
+            descriptions=descriptions,
+            status_code=400,
+
+        )
+
+class InvalidZipCode(BaseInternalException):
+    def __init__(self, zip_code: str):
+        descriptions = {
+            "pt_br": f"CEP inválido: {zip_code}",
+            "en_us": f"Invalid Zip Code: {zip_code}",
+        }
+
+        super().__init__(
+            name="INVALID_CNPJ", descriptions=descriptions, status_code=400
+        )
