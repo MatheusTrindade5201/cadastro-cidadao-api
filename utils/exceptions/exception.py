@@ -89,15 +89,6 @@ class InvalidToken(BaseInternalException):
         )
 
 
-class ErrorSendingEmail(BaseInternalException):
-    def __init__(self, description: str):
-        super().__init__(
-            name="Error to send email",
-            description=description,
-            status_code=502,
-        )
-
-
 class RefundRequestError(BaseInternalException):
     def __init__(self, description: str):
         super().__init__(
@@ -191,3 +182,26 @@ class InvalidZipCode(BaseInternalException):
         super().__init__(
             name="INVALID_CNPJ", descriptions=descriptions, status_code=400
         )
+
+class InvalidCPF(BaseInternalException):
+    def __init__(self, cpf: str):
+        descriptions = {
+            "pt_br": f"CPF inválido: {cpf}",
+            "en_us": f"Invalid CPF: {cpf}",
+        }
+
+        super().__init__(
+            name="INVALID_CPF", descriptions=descriptions, status_code=400
+        )
+
+class InvalidEmail(BaseInternalException):
+    def __init__(self, email: str):
+        descriptions = {
+            "pt_br": f"email inválido: {email}",
+            "en_us": f"Invalid email: {email}",
+        }
+
+        super().__init__(
+            name="INVALID_EMAIL", descriptions=descriptions, status_code=400
+        )
+

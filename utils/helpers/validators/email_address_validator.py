@@ -4,7 +4,7 @@ from email_validator import EmailNotValidError, validate_email
 def email_validator(email: str) -> bool:
     try:
         # Check that the email address is valid.
-        validate_email(email)
+        validate_email(email, check_deliverability=False)
 
         # Take the normalized form of the email address
         # for all logic beyond this point (especially
