@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 
 from logic.individual_logic import IndividualLogic
 from persistency.connection import get_db
-from persistency.schemas.individual_schemas import IndividualInput
+from persistency.schemas.individual_schemas import IndividualInput, DomicilioIndividuoInput, \
+    DomicilioIndividuoUpdateInput
 from persistency.schemas.user_schemas import RoleOptions
 from utils.helpers.validators.token_validator import validate_session_with_roles, validate_session
 
@@ -65,3 +66,44 @@ async def delete_individual(
     payload=Depends(validate_session)
 ):
     return await IndividualLogic.delete_individual_logic(individual_id, payload.get("sub"))
+
+
+@individual_router.post(
+    "/domicilio/associate",
+    description="Associa um indivíduo a um domicílio",
+    status_code=201,
+    dependencies=[Depends(get_db), Depends(validate_session_with_roles(RoleOptions.Admin))],
+)
+async def associate_individual_with_household(
+        data: DomicilioIndividuoInput
+):
+    return await IndividualLogic.associate_individual_with_household_logic(data)
+
+
+@individual_router.patch(
+    "/{individual_id}/domicilio/{domicilio_id}",
+    description="Atualiza a associação de um indivíduo com um domicílio",
+    status_code=200,
+    dependencies=[Depends(get_db), Depends(validate_session_with_roles(RoleOptions.Admin))],
+)
+async def update_household_association(
+        individual_id: int,
+        domicilio_id: int,
+        data: DomicilioIndividuoUpdateInput
+):
+    return await IndividualLogic.update_household_association_logic(
+        domicilio_id, individual_id, data)
+
+
+@individual_router.delete(
+    "/{individual_id}/domicilio/{domicilio_id}",
+    description="Remove a associação de um indivíduo com um domicílio",
+    status_code=204,
+    dependencies=[Depends(get_db), Depends(validate_session_with_roles(RoleOptions.Admin))],
+)
+async def disassociate_individual_from_household(
+        individual_id: int,
+        domicilio_id: int
+):
+    return await IndividualLogic.disassociate_individual_from_household_logic(
+        domicilio_id, individual_id)

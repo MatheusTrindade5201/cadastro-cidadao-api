@@ -78,3 +78,20 @@ class IndividualInput(BaseModel):
     doencas_respiratorias: Optional[List[str]]
     doencas_renais: Optional[List[str]]
     condicao_rua: Optional[CondicaoRuaInput]
+
+
+class DomicilioIndividuoInput(BaseModel):
+    domicilio_id: int
+    individuo_id: int
+    data_residencia: Optional[date] = None
+    mudou: Optional[bool] = None
+    renda_familia_salario_minimos: Optional[float] = None
+    n_membros_familia: Optional[int] = None
+    responsavel: Optional[bool] = None
+
+class DomicilioIndividuoUpdateInput(BaseModel):
+    data_residencia: Optional[date] = None
+    mudou: Optional[bool] = None
+    renda_familia_salario_minimos: Optional[float] = None
+    n_membros_familia: Optional[int] = None
+    responsavel: Optional[bool] = None

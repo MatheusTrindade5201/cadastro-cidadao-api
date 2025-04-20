@@ -3,10 +3,12 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistency.models.models import User
-from persistency.schemas.individual_schemas import IndividualInput
+from persistency.schemas.individual_schemas import IndividualInput, DomicilioIndividuoInput, \
+    DomicilioIndividuoUpdateInput
 from service.invidual_services import IndividualServices
+from service.residence_service import ResidenceService
 from service.shared_service import SharedService
-from utils.exceptions.exception import InvalidEmail, EntityNotExists
+from utils.exceptions.exception import InvalidEmail, EntityNotExists, AssociationAlreadyExists
 from utils.helpers.individuas_helpers.handle_associations import handle_association
 from utils.helpers.individuas_helpers.handle_homeless_condition import handle_homeless_condition
 from utils.helpers.individuas_helpers.handle_update_associations import handle_update_associations
@@ -73,6 +75,7 @@ class IndividualLogic:
         cardiac_diseases = await IndividualServices.get_cardiac_diseases_by_individual_id(individual_id, session)
         respiratory_diseases = await IndividualServices.get_respiratory_diseases_by_individual_id(individual_id, session)
         homeless_condition = await IndividualServices.get_homeless_condition_by_individual_id(individual_id, session)
+        residences = await IndividualServices.get_residences_by_individual_id(individual_id, session)
 
         result = individual.__dict__
         result["cuidadores"] = [c.cuidador for c in caretakers.scalars()]
@@ -80,20 +83,39 @@ class IndividualLogic:
         result["deficiencias"] = [d.deficiencia for d in deficiencies.scalars()]
         result["doencas_cardiacas"] = [cd.doenca for cd in cardiac_diseases.scalars()]
         result["doencas_respiratorias"] = [rd.doenca for rd in respiratory_diseases.scalars()]
+        result["residencias"] = [
+            {
+                "domicilio_id": r.DomicilioIndividuo.domicilio_id,
+                "data_residencia": r.DomicilioIndividuo.data_residencia.isoformat() if r.DomicilioIndividuo.data_residencia else None,
+                "mudou": r.DomicilioIndividuo.mudou,
+                "renda_familia_salario_minimos": float(
+                    r.DomicilioIndividuo.renda_familia_salario_minimos) if r.DomicilioIndividuo.renda_familia_salario_minimos else None,
+                "n_membros_familia": r.DomicilioIndividuo.n_membros_familia,
+                "responsavel": r.DomicilioIndividuo.responsavel,
+                "endereco_completo": f"{r.tipo_logradouro} {r.nome_logradouro}, {r.numero}" + (
+                    f", {r.complemento}" if r.complemento else ""),
+                "bairro": r.bairro,
+                "municipio": r.municipio,
+                "uf": r.uf,
+                "cep": r.cep
+            }
+            for r in residences
+        ]
 
         homeless_condition_result = homeless_condition.scalars().first()
         if homeless_condition_result:
             homeless_condition_dict = homeless_condition_result.__dict__
             result["condicao_rua"] = homeless_condition_dict
 
-            food_access = await IndividualServices.get_homeless_condition_food_access(homeless_condition_dict["id"], session)
-            hygiene_access = await IndividualServices.get_homeless_condition_hygiene_access(homeless_condition_dict["id"], session)
+            food_access = await IndividualServices.get_homeless_condition_food_access(homeless_condition_dict["id"],
+                                                                                      session)
+            hygiene_access = await IndividualServices.get_homeless_condition_hygiene_access(
+                homeless_condition_dict["id"], session)
 
             if food_access:
                 result["condicao_rua"]["origem_alimentacao"] = [c.origem for c in food_access.scalars()]
             if hygiene_access:
                 result["condicao_rua"]["acesso_higiene"] = [c.acesso_higiene for c in hygiene_access.scalars()]
-
 
         return result
 
@@ -112,3 +134,64 @@ class IndividualLogic:
 
         await IndividualServices.delete_individual(individual_id, session)
         return None
+
+    @staticmethod
+    @TransactionSession()
+    async def associate_individual_with_household_logic(
+            data: DomicilioIndividuoInput,
+            session: AsyncSession
+    ):
+        individual = await IndividualServices.get_individual_by_id(data.individuo_id, session)
+        if not individual:
+            raise EntityNotExists("Individual not found")
+
+        residence = await ResidenceService.get_residence_by_id(data.domicilio_id, session)
+        if not residence:
+            raise EntityNotExists("Residence not found")
+
+        existing = await IndividualServices.get_residence_individual(data.domicilio_id, data.individuo_id, session)
+        if existing:
+            raise AssociationAlreadyExists(
+               "Association already exists"
+            )
+
+        association = await IndividualServices.associate_individual_with_residence(data, session)
+        return association
+
+    @staticmethod
+    @TransactionSession()
+    async def update_household_association_logic(
+            domicilio_id: int,
+            individuo_id: int,
+            data: DomicilioIndividuoUpdateInput,
+            session: AsyncSession
+    ):
+        existing = await IndividualServices.get_residence_individual(domicilio_id, individuo_id, session)
+        if not existing:
+            raise EntityNotExists("Association not found")
+
+        updated = await IndividualServices.update_association(
+            domicilio_id, individuo_id, data, session
+        )
+        if not updated:
+            return {"message": "No data updated"}
+
+        return updated
+
+
+    @staticmethod
+    @TransactionSession()
+    async def disassociate_individual_from_household_logic(
+            domicilio_id: int,
+            individuo_id: int,
+            session: AsyncSession
+    ):
+        existing = await IndividualServices.get_residence_individual(domicilio_id, individuo_id, session)
+        if not existing:
+            raise EntityNotExists("Association not found")
+
+        await IndividualServices.disassociate_individual_from_residence(
+            domicilio_id, individuo_id, session
+        )
+
+        return None  # 204 No Content

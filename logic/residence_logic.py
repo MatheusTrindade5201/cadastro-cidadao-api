@@ -7,6 +7,7 @@ from persistency.schemas.residence_schemas import ResidenceInput, ResidenceInput
 from service.residence_service import ResidenceService
 from service.shared_service import SharedService
 from utils.exceptions.exception import EntityNotExists
+from utils.helpers.residence_helpers.format_residence_individuals import format_residence_individuals
 from utils.helpers.residence_helpers.validate_address import validate_delivery_address_creation
 from utils.helpers.residence_helpers.validate_residence_update import validate_residence_update
 from utils.middlewares.session_controller import TransactionSession
@@ -39,12 +40,15 @@ class ResidenceLogic:
     async def get_residence_logic(residence_id: int, session: AsyncSession):
         residence = await ResidenceService.get_residence_by_id(residence_id, session)
         animals = await ResidenceService.get_animals_by_residence(residence_id, session)
+        individuals = await ResidenceService.get_individuals_by_residence_id(residence_id, session)
 
         if not residence:
             raise EntityNotExists("Residence not found")
 
         response = dict(residence)
         response["animais"] = animals
+        response["individuos"] = format_residence_individuals(individuals)
+
         return response
 
     @staticmethod

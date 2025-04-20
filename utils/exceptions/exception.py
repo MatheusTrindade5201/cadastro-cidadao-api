@@ -133,6 +133,15 @@ class EntityNotExists(BaseInternalException):
         )
 
 
+class AssociationAlreadyExists(BaseInternalException):
+    def __init__(self, description: str):
+        super().__init__(
+            name="ASSOCIATION_ALREADY_EXISTS",
+            description=description,
+            status_code=400,
+        )
+
+
 class InvalidStateUF(BaseInternalException):
     def __init__(self, uf: str):
         descriptions = {

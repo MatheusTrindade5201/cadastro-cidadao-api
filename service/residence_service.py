@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import insert, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from persistency.models.models import Domicilio, DomicilioAnimal
+from persistency.models.models import Domicilio, DomicilioAnimal, DomicilioIndividuo, Individuo
 from persistency.schemas.residence_schemas import ResidenceInput, ResidenceAnimalsInput, ResidenceInputPatch
 from persistency.schemas.user_schemas import StatusOptions
 
@@ -101,4 +101,23 @@ class ResidenceService:
 
         result = await session.execute(stmt)
         return result.fetchall()
+
+    @staticmethod
+    async def get_individuals_by_residence_id(residence_id: int, session: AsyncSession):
+        query = (
+            select(
+                DomicilioIndividuo,
+                Individuo.nome,
+                Individuo.nome_social,
+                Individuo.data_nascimento,
+                Individuo.cpf,
+                Individuo.cns,
+                Individuo.celular
+            )
+            .join(Individuo, Individuo.id == DomicilioIndividuo.individuo_id)
+            .where(DomicilioIndividuo.domicilio_id == residence_id)
+        )
+        result = await session.execute(query)
+        return result.all()
+
 

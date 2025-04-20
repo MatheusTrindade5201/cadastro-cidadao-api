@@ -2,13 +2,14 @@ import asyncio
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import insert, update, delete, select
+from sqlalchemy import insert, update, delete, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistency.models.models import Individuo, CuidadorIndividuo, IndividuoDoencaCardiaca, IndividuoDeficiencia, \
     IndividuoDoencaRespiratoria, IndividuoCondicao, IndividuoCondicaoRua, CondicaoRuaOrigemAlimentacao, \
-    CondicaoRuaAcessoHigiene
-from persistency.schemas.individual_schemas import IndividualInput, CondicaoRuaInput
+    CondicaoRuaAcessoHigiene, DomicilioIndividuo, Domicilio
+from persistency.schemas.individual_schemas import IndividualInput, CondicaoRuaInput, DomicilioIndividuoInput, \
+    DomicilioIndividuoUpdateInput
 from utils.helpers.time_helpers.utc_to_local import utc_to_local
 
 
@@ -265,4 +266,98 @@ class IndividualServices:
 
         await session.execute(query)
 
+    @staticmethod
+    async def associate_individual_with_residence(
+            data: DomicilioIndividuoInput,
+            session: AsyncSession
+    ):
+        query = (
+            insert(DomicilioIndividuo)
+            .values(**data.dict())
+            .returning(DomicilioIndividuo)
+        )
+        result = await session.execute(query)
+        return result.fetchone()
+
+    @staticmethod
+    async def update_association(
+            domicilio_id: int,
+            individuo_id: int,
+            data: DomicilioIndividuoUpdateInput,
+            session: AsyncSession
+    ):
+        update_data = data.dict(exclude_unset=True)
+
+        if not update_data:
+            return None
+
+        query = (
+            update(DomicilioIndividuo)
+            .where(
+                (DomicilioIndividuo.domicilio_id == domicilio_id) &
+                (DomicilioIndividuo.individuo_id == individuo_id)
+            )
+            .values(**update_data)
+            .returning(DomicilioIndividuo)
+        )
+        result = await session.execute(query)
+        return result.fetchone()
+
+    @staticmethod
+    async def disassociate_individual_from_residence(
+            domicilio_id: int,
+            individuo_id: int,
+            session: AsyncSession
+    ):
+        query = (
+            delete(DomicilioIndividuo)
+            .where(
+                (DomicilioIndividuo.domicilio_id == domicilio_id) &
+                (DomicilioIndividuo.individuo_id == individuo_id)
+            )
+            .returning(DomicilioIndividuo.domicilio_id, DomicilioIndividuo.individuo_id)
+        )
+        result = await session.execute(query)
+        return result.fetchone()
+
+    @staticmethod
+    async def get_residence_individual(
+            domicilio_id: int,
+            individuo_id: int,
+            session: AsyncSession
+    ):
+        query = (
+            select(
+                DomicilioIndividuo
+            )
+            .where(
+                and_(
+                    DomicilioIndividuo.domicilio_id == domicilio_id,
+                    DomicilioIndividuo.individuo_id == individuo_id
+                )
+            )
+        )
+
+        result = await session.execute(query)
+        return result.fetchone()
+
+    @staticmethod
+    async def get_residences_by_individual_id(individual_id: int, session: AsyncSession):
+        query = (
+            select(
+                DomicilioIndividuo,
+                Domicilio.cep,
+                Domicilio.municipio,
+                Domicilio.uf,
+                Domicilio.bairro,
+                Domicilio.tipo_logradouro,
+                Domicilio.nome_logradouro,
+                Domicilio.numero,
+                Domicilio.complemento
+            )
+            .join(Domicilio, Domicilio.id == DomicilioIndividuo.domicilio_id)
+            .where(DomicilioIndividuo.individuo_id == individual_id)
+        )
+        result = await session.execute(query)
+        return result.all()
 
