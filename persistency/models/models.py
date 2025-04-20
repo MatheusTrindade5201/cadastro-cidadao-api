@@ -68,8 +68,8 @@ class DomicilioAnimal(Base):
 class Individuo(Base):
     __tablename__ = "individuo"
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    cns = Column(String(60), nullable=False)
-    cpf = Column(String(60), nullable=False)
+    cns = Column(String(60), nullable=False, unique=True)
+    cpf = Column(String(60), nullable=False, unique=True)
     domicilio = Column(String(60), nullable=False)
     nome = Column(String(60), nullable=False)
     nome_social = Column(String(60), nullable=True)
@@ -124,7 +124,7 @@ class Individuo(Base):
     domiciliado = Column(Boolean, nullable=True)
     praticas_ingestivas_complementares = Column(Boolean, nullable=True)
     registered_by = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
-    last_updated_by = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=False)
+    last_updated_by = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     status = Column(SmallInteger, nullable=False, default=0)
     created_at = Column(DateTime, default=lambda: utc_to_local(datetime.utcnow()), nullable=False)
     deleted_at = Column(DateTime, nullable=True)

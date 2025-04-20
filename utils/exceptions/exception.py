@@ -158,6 +158,18 @@ class ExternalServiceFailure(BaseInternalException):
             status_code=400,
         )
 
+class DuplicateEntryError(BaseInternalException):
+    def __init__(self, field: str):
+        descriptions = {
+            "pt_br": f"Já existe um indivíduo cadastrado com este {field}",
+            "en_us": f"There already is an individual with this {field}",
+        }
+        super().__init__(
+            name="DUPLICATE_ENTRY_ERROR",
+            descriptions=descriptions,
+            status_code=400,
+        )
+
 
 class InvalidCityForState(BaseInternalException):
     def __init__(self, city: str, state_uf: str):

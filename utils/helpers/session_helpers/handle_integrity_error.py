@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 
-from utils.exceptions.exception import EntityNotExists
+from utils.exceptions.exception import EntityNotExists, DuplicateEntryError
 
 
 def handle_integrity_error(error: IntegrityError):
@@ -39,5 +39,8 @@ def entity_not_exists_message(entity_name: str) -> EntityNotExists:
 
 foreign_key_exceptions = {}
 
-unique_constraint_exceptions = {}
+unique_constraint_exceptions = {
+    "individuo_cns_key": lambda: DuplicateEntryError("CNS"),
+    "individuo_cpf_key": lambda: DuplicateEntryError("CPF"),
+}
 

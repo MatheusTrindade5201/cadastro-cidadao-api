@@ -1,12 +1,15 @@
-from typing import List
+import asyncio
+from datetime import datetime
+from typing import List, Optional
 
-from sqlalchemy import insert
+from sqlalchemy import insert, update, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistency.models.models import Individuo, CuidadorIndividuo, IndividuoDoencaCardiaca, IndividuoDeficiencia, \
     IndividuoDoencaRespiratoria, IndividuoCondicao, IndividuoCondicaoRua, CondicaoRuaOrigemAlimentacao, \
     CondicaoRuaAcessoHigiene
 from persistency.schemas.individual_schemas import IndividualInput, CondicaoRuaInput
+from utils.helpers.time_helpers.utc_to_local import utc_to_local
 
 
 class IndividualServices:
@@ -168,4 +171,98 @@ class IndividualServices:
 
         result = await session.execute(query)
         return result.fetchone()
+
+    @staticmethod
+    async def get_individual_by_id(individual_id: int, session: AsyncSession):
+        query = select(Individuo).where(Individuo.id == individual_id)
+        result = await session.execute(query)
+        return result.scalars().first()
+
+    @staticmethod
+    async def get_all_individuals(registered_by: Optional[int], session: AsyncSession):
+        query = select(Individuo)
+        if registered_by:
+            query = query.where(Individuo.registered_by == registered_by)
+        result = await session.execute(query)
+        return result.scalars().all()
+
+    @staticmethod
+    async def update_individual(
+            individual_id: int,
+            update_data: dict,
+            user_id: int,
+            session: AsyncSession
+    ):
+            query = (
+                update(Individuo)
+                .where(Individuo.id == individual_id)
+                .values(**update_data, last_updated_by=user_id)
+            )
+            await session.execute(query)
+
+    @staticmethod
+    async def reset_individual_association(individual_id: int, session: AsyncSession):
+        tasks = [session.execute(delete(CuidadorIndividuo).where(CuidadorIndividuo.individuo_id == individual_id)),
+                 session.execute(delete(IndividuoCondicao).where(IndividuoCondicao.individuo_id == individual_id)),
+                 session.execute(
+                     delete(IndividuoDeficiencia).where(IndividuoDeficiencia.individuo_id == individual_id)),
+                 session.execute(
+                     delete(IndividuoDoencaCardiaca).where(IndividuoDoencaCardiaca.individuo_id == individual_id)),
+                 session.execute(
+                     delete(IndividuoDoencaRespiratoria).where(
+                         IndividuoDoencaRespiratoria.individuo_id == individual_id)), session.execute(
+                delete(IndividuoCondicaoRua).where(IndividuoCondicaoRua.individuo_id == individual_id))]
+
+        await asyncio.gather(*tasks)
+
+    @staticmethod
+    async def get_caretakers_by_individual_id(individual_id: int, session: AsyncSession):
+        return await session.execute(
+        select(CuidadorIndividuo).where(CuidadorIndividuo.individuo_id == individual_id))
+
+    @staticmethod
+    async def get_conditions_by_individual_id(individual_id: int, session: AsyncSession):
+        return await session.execute(
+        select(IndividuoCondicao).where(IndividuoCondicao.individuo_id == individual_id))
+
+    @staticmethod
+    async def get_deficiencies_by_individual_id(individual_id: int, session: AsyncSession):
+        return await session.execute(
+        select(IndividuoDeficiencia).where(IndividuoDeficiencia.individuo_id == individual_id))
+
+    @staticmethod
+    async def get_cardiac_diseases_by_individual_id(individual_id: int, session: AsyncSession):
+        return  await session.execute(
+        select(IndividuoDoencaCardiaca).where(IndividuoDoencaCardiaca.individuo_id == individual_id))
+
+    @staticmethod
+    async def get_respiratory_diseases_by_individual_id(individual_id: int, session: AsyncSession):
+        return await session.execute(
+        select(IndividuoDoencaRespiratoria).where(IndividuoDoencaRespiratoria.individuo_id == individual_id))
+
+    @staticmethod
+    async def get_homeless_condition_by_individual_id(individual_id: int, session: AsyncSession):
+        return await session.execute(
+        select(IndividuoCondicaoRua).where(IndividuoCondicaoRua.individuo_id == individual_id))
+
+    @staticmethod
+    async def get_homeless_condition_food_access(homeless_condition_id: int, session: AsyncSession):
+        return await session.execute(
+        select(CondicaoRuaOrigemAlimentacao).where(CondicaoRuaOrigemAlimentacao.condicao_rua_id == homeless_condition_id))
+
+    @staticmethod
+    async def get_homeless_condition_hygiene_access(homeless_condition_id: int, session: AsyncSession):
+        return await session.execute(
+        select(CondicaoRuaAcessoHigiene).where(CondicaoRuaAcessoHigiene.condicao_rua_id == homeless_condition_id))
+
+    @staticmethod
+    async def delete_individual(individual_id: int, session: AsyncSession):
+        query = (
+            update(Individuo)
+            .where(Individuo.id == individual_id)
+            .values(deleted_at=utc_to_local(datetime.utcnow())
+            ))
+
+        await session.execute(query)
+
 
