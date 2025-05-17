@@ -47,10 +47,14 @@ class InvalidPasswordInserted(BaseInternalException):
 
 
 class UnauthorizedLogin(BaseInternalException):
-    def __init__(self, description: str):
+    def __init__(self, _description: str):
+        descriptions = {
+            "pt_br": f"Usuário ou senha invalidos",
+            "en_us": f"Invalid username or password",
+        }
         super().__init__(
             name="Authentication fail",
-            description=description,
+            descriptions=descriptions,
             status_code=401,
         )
 
