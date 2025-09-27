@@ -1,12 +1,14 @@
 import os
 import asyncio
+
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # ================================
 # CONFIGURAÇÃO DO BANCO DE DADOS
 # ================================
-
+load_dotenv()
 # Pega a URL do banco do Fly
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
