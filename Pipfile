@@ -16,15 +16,17 @@ flake8 = "*"
 pyproject-flake8 = "*"
 pyjwt = "*"
 pytest = "*"
+pytest-asyncio = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 email-validator = "*"
-httpx = "*"
+httpx = "==0.25.0"
 python-multipart = "*"
 pydantic = "*"
 jinja2 = "*"
 pytz = "*"
 aiohttp = "*"
 unidecode = "*"
+pytest-cov = "*"
 
 [dev-packages]
 
