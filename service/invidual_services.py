@@ -10,6 +10,7 @@ from persistency.models.models import Individuo, CuidadorIndividuo, IndividuoDoe
     CondicaoRuaAcessoHigiene, DomicilioIndividuo, Domicilio
 from persistency.schemas.individual_schemas import IndividualInput, CondicaoRuaInput, DomicilioIndividuoInput, \
     DomicilioIndividuoUpdateInput
+from utils.helpers.query_helpers.handle_query_search import handle_query_search
 from utils.helpers.time_helpers.utc_to_local import utc_to_local
 
 
@@ -180,10 +181,26 @@ class IndividualServices:
         return result.scalars().first()
 
     @staticmethod
-    async def get_all_individuals(registered_by: Optional[int], session: AsyncSession):
+    async def get_all_individuals(registered_by: Optional[int], search: Optional[str], session: AsyncSession):
         query = select(Individuo)
+
         if registered_by:
             query = query.where(Individuo.registered_by == registered_by)
+
+        if search:
+            query = handle_query_search(
+                query, 
+                [
+                    Individuo.nome,
+                    Individuo.nome_social,
+                    Individuo.email,
+                    Individuo.numero_declaracao_obito,
+                    Individuo.cpf,
+                    Individuo.cns,
+                ], 
+                search
+            )
+
         result = await session.execute(query)
         return result.scalars().all()
 

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from persistency.models.models import Domicilio, DomicilioAnimal, DomicilioIndividuo, Individuo
 from persistency.schemas.residence_schemas import ResidenceInput, ResidenceAnimalsInput, ResidenceInputPatch
 from persistency.schemas.user_schemas import StatusOptions
+from utils.helpers.query_helpers.handle_query_search import handle_query_search
 
 
 class ResidenceService:
@@ -93,13 +94,27 @@ class ResidenceService:
         await session.execute(stmt)
 
     @staticmethod
-    async def list_all_residences(session: AsyncSession, user_id: int, only_registered_by: bool):
-        stmt = select(*Domicilio.__table__.columns).where(Domicilio.status == StatusOptions.Active)
+    async def list_all_residences(session: AsyncSession, search: Optional[str], user_id: int, only_registered_by: bool):
+        query = select(*Domicilio.__table__.columns).where(Domicilio.status == StatusOptions.Active)
 
         if only_registered_by is not None:
-            stmt = stmt.where(Domicilio.registered_by == user_id)
+            query = query.where(Domicilio.registered_by == user_id)
 
-        result = await session.execute(stmt)
+        if search:
+            query = handle_query_search(
+                query,
+                [
+                    Domicilio.cep,
+                    Domicilio.municipio,
+                    Domicilio.uf,
+                    Domicilio.bairro,
+                    Domicilio.localizacao,
+                    Domicilio.nome_logradouro,
+                ],
+                search
+            )
+
+        result = await session.execute(query)
         return result.fetchall()
 
     @staticmethod
