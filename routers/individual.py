@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from logic.individual_logic import IndividualLogic
 from persistency.connection import get_db
@@ -51,9 +51,10 @@ async def get_individual(
     dependencies=[Depends(get_db), Depends(validate_session_with_roles(RoleOptions.Default, RoleOptions.Admin))],
 )
 async def get_all_individuals(
-    registered_by: Optional[int] = None
+    registered_by: Optional[int] = None,
+    search: Optional[str] = Query(None, description="Filter individuals"),
 ):
-    return await IndividualLogic.get_all_individuals_logic(registered_by)
+    return await IndividualLogic.get_all_individuals_logic(registered_by, search)
 
 @individual_router.delete(
     "/{individual_id}",

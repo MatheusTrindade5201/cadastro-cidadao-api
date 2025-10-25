@@ -121,8 +121,9 @@ class IndividualLogic:
 
     @staticmethod
     @TransactionSession()
-    async def get_all_individuals_logic(registered_by: Optional[int], session: AsyncSession):
-        individuals = await IndividualServices.get_all_individuals(registered_by, session)
+    async def get_all_individuals_logic(registered_by: Optional[int], search: Optional[str], session: AsyncSession):
+        individuals = await IndividualServices.get_all_individuals(registered_by, search, session)
+
         return [individual.__dict__ for individual in individuals]
 
     @staticmethod

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
 
 from logic.residence_logic import ResidenceLogic
@@ -51,5 +53,9 @@ async def delete_residence(residence_id: int):
     description="List all residences (optional filter by registered_by)",
     dependencies=[Depends(get_db), Depends(validate_session)],
 )
-async def list_residences(only_registered_by: bool = Query(False, description="Get users registers"), payload=Depends(validate_session)):
-    return await ResidenceLogic.list_residences_logic(only_registered_by, payload.get("sub"))
+async def list_residences(
+        only_registered_by: bool = Query(False, description="Get users registers"),
+        search: Optional[str] = Query(None, description="Filter individuals"),
+        payload=Depends(validate_session)
+):
+    return await ResidenceLogic.list_residences_logic(only_registered_by, search, payload.get("sub"))

@@ -89,10 +89,10 @@ class ResidenceLogic:
 
     @staticmethod
     @TransactionSession()
-    async def list_residences_logic(only_registered_by: bool, username: str, session: AsyncSession):
+    async def list_residences_logic(only_registered_by: bool, search: Optional[str], username: str, session: AsyncSession):
         user = await SharedService.select_model_fields(User, session, "email", username, [User.id])
 
-        residences = await ResidenceService.list_all_residences(session, user.id, only_registered_by)
+        residences = await ResidenceService.list_all_residences(session, search, user.id, only_registered_by)
 
         return residences
 
