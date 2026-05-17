@@ -230,3 +230,64 @@ class InvalidEmail(BaseInternalException):
             name="INVALID_EMAIL", descriptions=descriptions, status_code=400
         )
 
+
+class ErrorSendingEmail(BaseInternalException):
+    def __init__(self, description: str):
+        super().__init__(
+            name="ERROR_SENDING_EMAIL",
+            description=description,
+            status_code=500,
+        )
+
+
+class DeveloperAlreadyExists(BaseInternalException):
+    def __init__(self):
+        descriptions = {
+            "pt_br": "Já existe um desenvolvedor cadastrado com este e-mail.",
+            "en_us": "A developer account with this email already exists.",
+        }
+        super().__init__(
+            name="DEVELOPER_ALREADY_EXISTS",
+            descriptions=descriptions,
+            status_code=400,
+        )
+
+
+class ApiKeyAlreadyRevoked(BaseInternalException):
+    def __init__(self):
+        descriptions = {
+            "pt_br": "Esta chave de API já foi revogada.",
+            "en_us": "This API key has already been revoked.",
+        }
+        super().__init__(
+            name="API_KEY_ALREADY_REVOKED",
+            descriptions=descriptions,
+            status_code=400,
+        )
+
+
+class InvalidApiKey(BaseInternalException):
+    def __init__(self):
+        descriptions = {
+            "pt_br": "Chave de API inválida ou ausente.",
+            "en_us": "Invalid or missing API key.",
+        }
+        super().__init__(
+            name="INVALID_API_KEY",
+            descriptions=descriptions,
+            status_code=401,
+        )
+
+
+class MagicLinkExpired(BaseInternalException):
+    def __init__(self):
+        descriptions = {
+            "pt_br": "Link de acesso expirado ou já utilizado.",
+            "en_us": "Magic link has expired or was already used.",
+        }
+        super().__init__(
+            name="MAGIC_LINK_EXPIRED",
+            descriptions=descriptions,
+            status_code=401,
+        )
+

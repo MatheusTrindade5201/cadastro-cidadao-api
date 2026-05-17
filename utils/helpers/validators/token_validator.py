@@ -40,3 +40,10 @@ def validate_session_with_roles(*valid_roles: RoleOptions):
             raise UnauthorizedAccess(err.detail)
 
     return _validate_session
+
+
+def validate_portal_session(token: str = Depends(oauth2_scheme)) -> str:
+    payload = verify_jwt_token(token)
+    if payload.get("type") != "portal_session":
+        raise UnauthorizedLogin("Invalid portal session")
+    return payload["sub"]

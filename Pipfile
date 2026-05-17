@@ -27,6 +27,7 @@ pytz = "*"
 aiohttp = "*"
 unidecode = "*"
 pytest-cov = "*"
+slowapi = "==0.1.9"
 
 [dev-packages]
 
