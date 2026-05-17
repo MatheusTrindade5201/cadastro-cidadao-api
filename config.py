@@ -67,3 +67,5 @@ class Config(metaclass=SingletonMeta):
     CANCEL_URL = getenv("CANCEL_URL", "http://localhost:8000/payments/cancel")
     EXPIRES_CHECKOUT = getenv("EXPIRES_CHECKOUT", 3600)
     ISO_CURRENCY_CODE = getenv("ISO_CURRENCY_CODE", "BRL")
+
+    PUBLIC_API_BASE_URL = getenv("PUBLIC_API_BASE_URL", "http://localhost:5173")

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, SmallInteger, String, ForeignKey, Boolean, Date
+from sqlalchemy import Column, DateTime, Integer, SmallInteger, String, ForeignKey, Boolean, Date, Index
 from sqlalchemy.dialects.mysql import DECIMAL
 
 from persistency.connection import Base
@@ -209,3 +209,49 @@ class CondicaoRuaAcessoHigiene(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     condicao_rua_id = Column(Integer, ForeignKey("individuo_condicao_rua.id", ondelete="CASCADE"))
     acesso_higiene = Column(String(60))
+
+
+class ApiKeyDeveloper(Base):
+    __tablename__ = "api_key_developer"
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    name = Column(String(120), nullable=False)
+    email = Column(String(120), unique=True, nullable=False)
+    password_hash = Column(String(200), nullable=True)
+    status = Column(SmallInteger, nullable=False, default=0)  # 0=active, -1=banned
+    created_at = Column(DateTime, default=lambda: utc_to_local(datetime.utcnow()), nullable=False)
+    updated_at = Column(DateTime, onupdate=lambda: utc_to_local(datetime.utcnow()), nullable=True)
+
+
+class ApiKey(Base):
+    __tablename__ = "api_key"
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    developer_id = Column(Integer, ForeignKey("api_key_developer.id", ondelete="CASCADE"), nullable=False)
+    prefix = Column(String(16), nullable=False)
+    key_hash = Column(String(200), nullable=False)
+    status = Column(String(10), nullable=False, default="active")  # "active" | "revoked"
+    created_at = Column(DateTime, default=lambda: utc_to_local(datetime.utcnow()), nullable=False)
+    last_used_at = Column(DateTime, nullable=True)
+    revoked_at = Column(DateTime, nullable=True)
+    revoked_by = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    __table_args__ = (Index("ix_api_key_prefix", "prefix"),)
+
+
+class ApiKeyUsageLog(Base):
+    __tablename__ = "api_key_usage_log"
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    api_key_id = Column(Integer, ForeignKey("api_key.id", ondelete="CASCADE"), nullable=False)
+    endpoint = Column(String(200), nullable=False)
+    method = Column(String(10), nullable=False)
+    status_code = Column(Integer, nullable=False)
+    requested_at = Column(DateTime, default=lambda: utc_to_local(datetime.utcnow()), nullable=False)
+    ip_address = Column(String(45), nullable=True)
+
+
+class DeveloperSession(Base):
+    __tablename__ = "developer_session"
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    developer_id = Column(Integer, ForeignKey("api_key_developer.id", ondelete="CASCADE"), nullable=False)
+    token_hash = Column(String(200), unique=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=lambda: utc_to_local(datetime.utcnow()), nullable=False)
